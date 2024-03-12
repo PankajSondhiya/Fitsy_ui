@@ -67,7 +67,7 @@ const Auth = () => {
         default:
       }
     } catch (ex) {
-      toast.error(ex.response.data.message);
+      console.log(ex);
     } finally {
       setIsDataLoading(false);
     }
