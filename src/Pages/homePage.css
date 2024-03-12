@@ -1,0 +1,16 @@
+.custum_search {
+  position: relative;
+  width: 500px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.search_icon {
+  font-size: 20px;
+  display: flex;
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  z-index: 100;
+}

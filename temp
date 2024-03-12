@@ -1,0 +1,175 @@
+<!-- <div className="d-flex mt-2">
+                      {editPrescriptionData.medicines
+                        ? editPrescriptionData.medicines.map((medicine) => (
+                            <Button
+                              key={medicine._id}
+                              variant="secondary"
+                              className="me-2"
+                            >
+                              {medicine ? medicine.name : "Unknown Medicine"}
+                              <MdOutlineCancel
+                                onClick={() => removeMedicine(medicine._id)}
+                              />
+                            </Button>
+                          ))
+                        : prescriptionData.medicines &&
+                          prescriptionData.medicines.map((mediId, index) => {
+                            const medicine = medicinesList.find(
+                              (med) => med._id === mediId
+                            );
+                            return (
+                              <Button
+                                key={index}
+                                variant="secondary"
+                                className="me-2"
+                              >
+                                {medicine ? medicine.name : "Unknown Medicine"}
+                                <MdOutlineCancel
+                                  onClick={() => removeMedicine(mediId)}
+                                />
+                              </Button>
+                            );
+                          })}
+                    </div> -->
+
+<!-- isSicknessEdit
+                        ? editPrescriptionData.medicines
+                          ? editSicknessData.medicines.map((medi) => (
+                              <Button
+                                key={medi._id}
+                                variant="secondary"
+                                className="me-2"
+                              >
+                                {medi.name}
+                                <MdOutlineCancel
+                                  onClick={() => removeMedicine(medi._Id)}
+                                />
+                              </Button>
+                            ))
+                          : null
+                        :  -->
+ {/* <Modal
+        show={showHospitalModal}
+        onHide={() => setShowHospitalModal(false)}
+        backdrop="static"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Hospital details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedHospital && (
+            <div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Name:</span>{" "}
+                {selectedHospital.name}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Email:</span>{" "}
+                {selectedHospital.email}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Description:</span>{" "}
+                {selectedHospital.description}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>No of beds:</span>{" "}
+                {selectedHospital.noOfBeds}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Contact NO:</span>{" "}
+                {selectedHospital.contactNo}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowHospitalModal(false);
+            }}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Modal show={showDoctorModal} onHide={() => setShowDoctorModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Doctor details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedDoctor && (
+            <div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Name:</span>{" "}
+                {selectedDoctor.user.name}
+              </div>{" "}
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Email:</span>{" "}
+                {selectedDoctor.user.email}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Description:</span>{" "}
+                {selectedDoctor.description}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Doctor Type</span>{" "}
+                {selectedDoctor.doctorType}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Experience:</span>{" "}
+                {selectedDoctor.experience}
+              </div>
+              <div className="mb-2">
+                <span style={{ fontWeight: "bolder" }}>Gender:</span>{" "}
+                {selectedDoctor.gender}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDoctorModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal> */}
+      {/* <Modal
+        show={showPrescriptionModal}
+        onHide={() => setShowPrescriptionModal(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Hospital details</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div>
+            <div className="mb-2">
+              <span style={{ fontWeight: "bolder" }}>Name:</span>{" "}
+              {selectedHospital.hospital.name}
+            </div>
+            <div className="mb-2">
+              <span style={{ fontWeight: "bolder" }}>Email:</span>{" "}
+              {selectedHospital.hospital.email}
+            </div>
+            <div className="mb-2">
+              <span style={{ fontWeight: "bolder" }}>Description:</span>{" "}
+              {selectedHospital.hospital.description}
+            </div>
+            <div className="mb-2">
+              <span style={{ fontWeight: "bolder" }}>No of beds:</span>{" "}
+              {selectedHospital.hospital.noOfBeds}
+            </div>
+            <div className="mb-2">
+              <span style={{ fontWeight: "bolder" }}>Contact NO:</span>{" "}
+              {selectedHospital.hospital.contactNo}
+            </div>
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowPrescriptionModal(false)}
+          >
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal> */}
