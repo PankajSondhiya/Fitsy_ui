@@ -1,0 +1,52 @@
+/* .navbar {
+  position: relative;
+} */
+
+.icon h3 {
+  cursor: pointer;
+}
+
+.User_image {
+  position: relative;
+}
+
+.drop_down .dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.281);
+  height: auto;
+  top: 30px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
+  right: 0px;
+}
+
+.User_image:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content .text-white {
+  color: white;
+  padding: 10px 16px;
+
+  display: block;
+  cursor: pointer;
+}
+
+.dropdown-content .text-white:hover {
+  background-color: rgba(26, 25, 25, 0.813);
+  color: rgb(206, 195, 195);
+  text-decoration: underline;
+}
+.avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30px;
+  width: 30px;
+  border-radius: 50%;
+  background-color: rgb(30, 30, 30);
+  margin-right: 10px;
+  color: whitesmoke;
+  font-size: 15px;
+}

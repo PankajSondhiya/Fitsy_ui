@@ -1,244 +1,86 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Accordion, Button, Modal } from "react-bootstrap";
 import { AxiosInstance } from "../Utils/AxiosInstance";
 import { toast } from "react-toastify";
 import { MdOutlineCancel } from "react-icons/md";
 import { IoMdAddCircle } from "react-icons/io";
-const CreateSickness = ({
-  fetchSickness,
-  showSicknessModal,
+import { useDispatch, useSelector } from "react-redux";
+import { RxCrossCircled } from "react-icons/rx";
+
+import {
+  createSickness,
+  setAccordianActiveKey,
   setShowSicknessModal,
-  selectedAppointment,
-  medicinesList,
-  editSicknessData,
-  isSicknessEdit,
-  showSicknessEditModal,
-  setEditSicknessData,
-  setIsSicknessEdit,
-  setShowSicknessEditModal,
-  editPrescriptionData,
-  setEditPrescriptionData,
-}) => {
+  updateSickness,
+  updateSicknessInfo,
+} from "../Slices/sickness";
+import { fetchMedicines } from "../Slices/medicines";
+import {
+  createPrescription,
+  updatePrescription,
+  updatePrescriptionInfo,
+} from "../Slices/priscription";
+import {
+  addTest,
+  addmedicinesToPrescription,
+  removeMedicinestoPrescription,
+  removeTest,
+} from "../Services/prescription";
+
+const CreateSickness = ({}) => {
   const [testValue, setTestValue] = useState("");
-  const [accordionActiveKey, setAccordionActiveKey] = useState("0");
-  const [prescriptionData, setPresciptionData] = useState({
-    medicines: [],
-    doctorFee: "",
-    medicinesFee: "",
-    tests: "",
-    duration: "",
-  });
-  const [sicknessDetail, setSicknessDetail] = useState({
-    patient: "",
-    diagnosis: "",
-    doctor: localStorage.getItem("_id"),
-    hospital: "",
-    prescription: "",
-  });
-  function sicknessCreateFormChange(event) {
-    setSicknessDetail({
-      ...sicknessDetail,
-      [event.target.name]: event.target.value,
-    });
-  }
 
-  const prescriptionChange = (event) => {
-    const { name, value } = event.target;
+  const accordionActiveKey = useSelector(
+    (state) => state.sickness.accordionActiveKey
+  );
 
-    if (name === "medicines") {
-      if (value === "") {
-        setPresciptionData({
-          ...prescriptionData,
-          medicines: [],
-        });
-      } else {
-        setPresciptionData({
-          ...prescriptionData,
-          medicines: [...prescriptionData.medicines, value],
-        });
-      }
+  const showSicknessModal = useSelector(
+    (state) => state.sickness.showSicknessModal
+  );
+
+  const { medicinesList, isLoading, isError } = useSelector(
+    (state) => state.medicines.medicinesData
+  );
+
+  const { prescriptionInfo } = useSelector((state) => state.prescription);
+
+  const { sicknessInfo, isSicknessEdit } = useSelector(
+    (state) => state.sickness
+  );
+
+  const dispatch = useDispatch();
+
+  console.log(sicknessInfo);
+  useEffect(() => {
+    dispatch(fetchMedicines());
+  }, [showSicknessModal]);
+
+  function handelMedicinesChange(id) {
+    if (prescriptionInfo.medicines.includes(id)) {
+      dispatch(removeMedicinestoPrescription(id));
     } else {
-      setPresciptionData({
-        ...prescriptionData,
-        [name]: value,
-      });
-    }
-  };
-  console.log(editPrescriptionData);
-
-  async function createPrescription() {
-    const data = {
-      medicines: prescriptionData.medicines,
-      doctorFee: prescriptionData.doctorFee,
-      medicinesFee: prescriptionData.medicinesFee,
-      tests: prescriptionData.tests,
-      duration: prescriptionData.duration,
-    };
-    const response = await AxiosInstance.post(
-      "/fitsy/api/v1/prescriptions",
-      data
-    );
-    const prescription = response.data;
-
-    setSicknessDetail({
-      ...sicknessDetail,
-      prescription: [prescription._id],
-    });
-
-    setPresciptionData({
-      medicines: [],
-      doctorFee: "",
-      medicinesFee: "",
-      tests: "",
-      duration: "",
-    });
-    setAccordionActiveKey("-1");
-  }
-
-  function removeMedicine(mediId) {
-    console.log(mediId);
-    if (isSicknessEdit) {
-      const updatedMedi = editPrescriptionData.medicines.filter(
-        (medId) => medId !== mediId
-      );
-      console.log(updatedMedi);
-      setEditPrescriptionData({
-        ...editPrescriptionData,
-        medicines: updatedMedi,
-      });
-    } else {
-      const updatedMedicines = prescriptionData.medicines.filter(
-        (id) => id !== mediId
-      );
-      setPresciptionData({
-        ...prescriptionData,
-        medicines: updatedMedicines,
-      });
+      dispatch(addmedicinesToPrescription(id));
     }
   }
 
-  function addTests(value) {
-    if (isSicknessEdit) {
-      const TestList = [...editPrescriptionData.tests, value];
-      console.log(TestList);
-      setEditPrescriptionData({
-        ...editPrescriptionData,
-        tests: TestList,
-      });
+  const SelectedMedicines = medicinesList?.filter((medicine) =>
+    prescriptionInfo.medicines.includes(medicine._id)
+  );
+
+  function handleTestChange(value) {
+    if (prescriptionInfo.tests.includes(value)) {
+      dispatch(removeTest(value));
       setTestValue("");
     } else {
-      const updatedTasks = [...prescriptionData.tests, value];
-      //every time it is creating the new array and adding the currrent value
-
-      setPresciptionData({
-        ...prescriptionData,
-        tests: updatedTasks,
-      });
+      dispatch(addTest(value));
       setTestValue("");
     }
   }
-
-  function removeTests(value) {
-    if (isSicknessEdit) {
-      const updatedTest = editPrescriptionData.tests.filter(
-        (test) => test.toLowerCase() !== value.toLowerCase()
-      );
-      setEditPrescriptionData({
-        ...editPrescriptionData,
-        tests: updatedTest,
-      });
-    } else {
-      const updatedTests = prescriptionData.tests.filter(
-        (test) => test.toLowerCase() !== value.toLowerCase()
-      );
-      setPresciptionData({
-        ...prescriptionData,
-        tests: updatedTests,
-      });
-    }
-  }
-
-  async function createSickness() {
-    const data = {
-      patient: selectedAppointment.userId,
-      diagnosis: sicknessDetail.diagnosis,
-      doctor: selectedAppointment.doctor,
-      hospital: selectedAppointment.hospital,
-      prescription: sicknessDetail.prescription,
-    };
-    try {
-      await AxiosInstance.post("/fitsy/api/v1/sicknesses", data);
-      toast.success("sickness created");
-    } catch (ex) {
-      toast.error("error occured try again in some time");
-    }
-    setShowSicknessModal(false);
-    fetchSickness();
-  }
-
-  const sicknessEditChange = (event) => {
-    setEditSicknessData({
-      ...editSicknessData,
-      [event.target.name]: event.target.value,
-    });
-  };
-  const prescriptionsEditChange = (event) => {
-    setEditPrescriptionData({
-      ...editPrescriptionData,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  async function UpdateSickness(id) {
-    try {
-      await AxiosInstance.put(
-        `/fitsy/api/v1/sicknesses/${id}`,
-        editSicknessData
-      );
-      setIsSicknessEdit(false);
-      setShowSicknessEditModal(false);
-      setEditSicknessData({});
-      fetchSickness();
-    } catch (ex) {
-      toast.success("sickness updated successfully");
-    }
-  }
-
-  async function updatePrescriotion(id) {
-    await AxiosInstance.put(
-      `/fitsy/api/v1/prescriptions/${id}`,
-      editPrescriptionData
-    );
-    setAccordionActiveKey("-1");
-  }
-
-  const editPrecriptionMedicineChange = (event) => {
-    const { name, value } = event.target;
-    if (isSicknessEdit) {
-      if (value === "") {
-        setEditPrescriptionData({
-          ...editPrescriptionData,
-          medicines: [],
-        });
-      } else {
-        setEditPrescriptionData({
-          ...editPrescriptionData,
-          medicines: [...editPrescriptionData.medicines, value],
-        });
-      }
-    }
-  };
-
   return (
     <>
-      {" "}
       <Modal
-        show={isSicknessEdit ? showSicknessEditModal : showSicknessModal}
-        onHide={
-          isSicknessEdit
-            ? () => setShowSicknessEditModal(false)
-            : () => setShowSicknessModal(false)
-        }
+        show={showSicknessModal}
+        onHide={() => dispatch(setShowSicknessModal(false))}
       >
         <Modal.Header closeButton>
           <Modal.Title>
@@ -251,13 +93,14 @@ const CreateSickness = ({
             <input
               type="text"
               name="diagnosis"
-              value={
-                isSicknessEdit
-                  ? editSicknessData.diagnosis
-                  : sicknessDetail.diagnosis
-              }
-              onChange={
-                isSicknessEdit ? sicknessEditChange : sicknessCreateFormChange
+              value={sicknessInfo.diagnosis}
+              onChange={(event) =>
+                dispatch(
+                  updateSicknessInfo({
+                    field: "diagnosis",
+                    value: event.target.value,
+                  })
+                )
               }
               className="form-control"
               placeholder="enter diagnosis"
@@ -268,7 +111,7 @@ const CreateSickness = ({
             <Accordion
               defaultActiveKey="0"
               activeKey={accordionActiveKey}
-              onSelect={(key) => setAccordionActiveKey(key)}
+              onSelect={(key) => dispatch(setAccordianActiveKey(key))}
             >
               <Accordion.Item>
                 <Accordion.Header>Priscription</Accordion.Header>
@@ -279,19 +122,15 @@ const CreateSickness = ({
                       className="form-select"
                       name="medicines"
                       placeholder="select the medicines"
-                      value={
-                        isSicknessEdit
-                          ? editPrescriptionData.medicines
-                          : prescriptionData.medicines
-                      }
-                      onChange={
-                        isSicknessEdit
-                          ? editPrecriptionMedicineChange
-                          : prescriptionChange
+                      value={prescriptionInfo.medicines}
+                      multiple
+                      onChange={(event) =>
+                        handelMedicinesChange(event.target.value)
                       }
                     >
-                      <option></option>
-
+                      <option value="" disabled>
+                        select medicines
+                      </option>
                       {medicinesList &&
                         medicinesList.map((med, index) => (
                           <option key={index} value={med._id}>
@@ -299,62 +138,46 @@ const CreateSickness = ({
                           </option>
                         ))}
                     </select>
-                    <div className="d-flex mt-2">
-                      {isSicknessEdit
-                        ? editPrescriptionData.medicines &&
-                          editPrescriptionData.medicines.map((medId, index) => {
-                            const medicine = medicinesList.find(
-                              (med) => med._id === medId
-                            );
-                            return (
-                              <Button
-                                key={index}
-                                variant="secondary"
-                                className="me-2"
-                              >
-                                {medicine.name}
-                                <MdOutlineCancel
-                                  onClick={() => removeMedicine(medicine._id)}
-                                />
-                              </Button>
-                            );
-                          })
-                        : prescriptionData.medicines &&
-                          prescriptionData.medicines.map((mediId, index) => {
-                            const medicine = medicinesList.find(
-                              (med) => med._id === mediId
-                            );
-                            return (
-                              <Button
-                                key={index}
-                                variant="secondary"
-                                className="me-2"
-                              >
-                                {medicine ? medicine.name : "Unknown Medicine"}
-                                <MdOutlineCancel
-                                  onClick={() => removeMedicine(mediId)}
-                                />
-                              </Button>
-                            );
-                          })}
-                    </div>
+                    <div className="d-flex flex-wrap">
+                      {SelectedMedicines?.map((item, index) => (
+                        <div
+                          className="medicine"
+                          style={{
+                            border: "2px solid black",
+                            paddingLeft: "3px",
+                            paddingRight: "5px",
 
+                            margin: "2px",
+                            borderTopLeftRadius: "20px",
+                            borderBottomLeftRadius: "20px",
+                            borderTopRightRadius: "20px",
+                            borderBottomRightRadius: "20px",
+                          }}
+                          key={index}
+                        >
+                          {item.name}{" "}
+                          <RxCrossCircled
+                            cursor="pointer"
+                            onClick={() => handelMedicinesChange(item._id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
                     <div>
                       <div className="inputgroup mb-1">
                         <div>DoctorFee</div>
 
                         <input
-                          type="number"
+                          type="text"
                           name="doctorFee"
-                          value={
-                            isSicknessEdit
-                              ? editPrescriptionData.doctorFee
-                              : prescriptionData.doctorFee
-                          }
-                          onChange={
-                            isSicknessEdit
-                              ? (event) => prescriptionsEditChange(event)
-                              : prescriptionChange
+                          value={prescriptionInfo.doctorFee}
+                          onChange={(event) =>
+                            dispatch(
+                              updatePrescriptionInfo({
+                                field: "doctorFee",
+                                value: event.target.value,
+                              })
+                            )
                           }
                           className="form-control"
                           placeholder="enter doctorfee"
@@ -363,17 +186,16 @@ const CreateSickness = ({
                       <div className="inputgroup mb-1">
                         <div>Medicines Fees</div>
                         <input
-                          type="number"
+                          type="text"
                           name="medicinesFee"
-                          value={
-                            isSicknessEdit
-                              ? editPrescriptionData.medicinesFee
-                              : prescriptionData.medicinesFee
-                          }
-                          onChange={
-                            isSicknessEdit
-                              ? prescriptionsEditChange
-                              : prescriptionChange
+                          value={prescriptionInfo.medicinesFee}
+                          onChange={(event) =>
+                            dispatch(
+                              updatePrescriptionInfo({
+                                field: "medicinesFee",
+                                value: event.target.value,
+                              })
+                            )
                           }
                           className="form-control"
                           placeholder="enter medicines fee"
@@ -386,51 +208,56 @@ const CreateSickness = ({
                             type="text"
                             name="tests"
                             value={testValue}
-                            onChange={(e) => setTestValue(e.target.value)}
+                            onChange={(event) =>
+                              setTestValue(event.target.value)
+                            }
                             className="form-control"
                             placeholder="enter tests"
                           />
                           <IoMdAddCircle
-                            onClick={() => addTests(testValue)}
+                            onClick={() => handleTestChange(testValue)}
                             style={{ position: "absolute", right: "50px" }}
                           />
                         </div>
                       </div>
-                      <div className="tests_list">
-                        {isSicknessEdit
-                          ? editPrescriptionData.tests &&
-                            editPrescriptionData.tests.map((test, index) => (
-                              <button key={index} className="btn btn-secondary">
-                                {test}
-                                <MdOutlineCancel
-                                  onClick={() => removeTests(test)}
-                                />
-                              </button>
-                            ))
-                          : prescriptionData.tests &&
-                            prescriptionData.tests.map((test, index) => (
-                              <button key={index} className="btn btn-secondary">
-                                {test}
-                                <MdOutlineCancel
-                                  onClick={() => removeTests(test)}
-                                />
-                              </button>
-                            ))}
+                      <div className="d-flex flex-wrap">
+                        {prescriptionInfo.tests?.map((item, index) => (
+                          <div
+                            className="medicine d-flex justify-content-center align-items-center"
+                            style={{
+                              border: "2px solid black",
+                              paddingLeft: "3px",
+                              paddingRight: "5px",
+
+                              margin: "2px",
+                              borderTopLeftRadius: "20px",
+                              borderBottomLeftRadius: "20px",
+                              borderTopRightRadius: "20px",
+                              borderBottomRightRadius: "20px",
+                            }}
+                            key={index}
+                          >
+                            {item}
+                            <RxCrossCircled
+                              cursor="pointer"
+                              onClick={() => handleTestChange(item)}
+                            />
+                          </div>
+                        ))}
                       </div>
                       <div className="inputgroup mb-1">
                         <div>Duration</div>
                         <input
-                          type="number"
+                          type="text"
                           name="duration"
-                          value={
-                            isSicknessEdit
-                              ? editPrescriptionData.duration
-                              : prescriptionData.duration
-                          }
-                          onChange={
-                            isSicknessEdit
-                              ? prescriptionsEditChange
-                              : prescriptionChange
+                          value={prescriptionInfo.duration}
+                          onChange={(event) =>
+                            dispatch(
+                              updatePrescriptionInfo({
+                                field: "duration",
+                                value: event.target.value,
+                              })
+                            )
                           }
                           className="form-control"
                           placeholder="enter the duration"
@@ -440,15 +267,26 @@ const CreateSickness = ({
 
                     <button
                       className="btn btn-success"
-                      onClick={
+                      onClick={() =>
                         isSicknessEdit
-                          ? () => updatePrescriotion(editPrescriptionData._id)
-                          : () => createPrescription()
+                          ? dispatch(
+                              updatePrescription({
+                                id: prescriptionInfo._id,
+                                Data: prescriptionInfo,
+                                dispatch,
+                              })
+                            )
+                          : dispatch(
+                              createPrescription({
+                                Data: prescriptionInfo,
+                                dispatch,
+                              })
+                            )
                       }
                     >
                       {isSicknessEdit
                         ? "Edit Prescription"
-                        : "Create Prescription"}
+                        : "Create Prescriotion"}
                     </button>
                   </div>
                 </Accordion.Body>
@@ -459,16 +297,22 @@ const CreateSickness = ({
         <Modal.Footer>
           <Button
             variant="secondary"
-            onClick={() => setShowSicknessModal(false)}
+            onClick={() => dispatch(setShowSicknessModal(false))}
           >
             Cancel
           </Button>
           <Button
             variant="primary"
-            onClick={
+            onClick={() =>
               isSicknessEdit
-                ? () => UpdateSickness(editSicknessData._id)
-                : () => createSickness()
+                ? dispatch(
+                    updateSickness({
+                      id: sicknessInfo._id,
+                      Data: sicknessInfo,
+                      dispatch,
+                    })
+                  )
+                : dispatch(createSickness({ Data: sicknessInfo, dispatch }))
             }
           >
             {isSicknessEdit ? "Edit Sickness" : "Create Sickness"}

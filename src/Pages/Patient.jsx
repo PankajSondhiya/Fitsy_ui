@@ -5,63 +5,28 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { useNavigate } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import "../Pages/homePage.css";
-import { toast } from "react-toastify";
 import Navbar from "../Componenets/Navbaar";
-import { FaSearch } from "react-icons/fa";
-import Loader from "../Componenets/loader";
+
 import AppointmentTable from "../Componenets/PatientAppointmentTable";
 import DiagnosisTable from "../Componenets/PatientDiagnosisTable";
 import { Window } from "react-bootstrap-icons";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSickness, setTableToggle } from "../Slices/sickness";
+import { fetchAppointment } from "../Slices/appointment";
 
-const Patient = ({
-  appointmentList,
-  setAppoinmentList,
-  isDataLoading,
-  setIsDataLoading,
-  fetchAppoinment,
-  fetchSickness,
-  sicknessList,
-  setHospitalList,
-  hospitalList,
-  setSicknessList,
-  medicinesList,
-  fetchMedicines,
-  setMedicinesList,
-}) => {
-  const [showCreateAppointmentModal, setShowCreateAppointmentModal] =
-    useState(false);
+const Patient = () => {
+  const { tableToggle } = useSelector((store) => store.sickness);
+  const { data, isError, isLoading } = useSelector(
+    (store) => store.sickness.sicknessList
+  );
 
-  const [doctorList, setDoctorList] = useState([]);
-  const [tableTogle, setTableTogle] = useState(true);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  async function fetchDoctors(event) {
-    try {
-      const { data } = await AxiosInstance.get("/fitsy/api/v1/doctors");
-      setDoctorList(data);
-    } catch (ex) {
-      console.log(ex);
-    }
-  }
-  async function fetchHospitals() {
-    try {
-      const { data } = await AxiosInstance.get("/fitsy/api/v1/hospitals");
-      setHospitalList(data);
-    } catch (ex) {
-      toast.error("error occured!");
-    }
-  }
-
   useEffect(() => {
-    if (!localStorage.getItem("token")) {
-      navigate("/");
-    } else {
-      fetchSickness();
-      fetchDoctors();
-      fetchAppoinment();
-      fetchHospitals();
-    }
-  }, []);
+    // dispatch(fetchSickness());
+    dispatch(fetchAppointment());
+  }, [dispatch]);
 
   return (
     <div className="vh-100">
@@ -77,13 +42,13 @@ const Patient = ({
         >
           <button
             className="btn btn-success my-1"
-            onClick={() => setTableTogle(true)}
+            onClick={() => dispatch(setTableToggle())}
           >
             Sickness list
           </button>
           <button
             className="btn btn-success  mb-1"
-            onClick={() => setTableTogle(false)}
+            onClick={() => dispatch(setTableToggle())}
           >
             Appointment list
           </button>
@@ -98,43 +63,17 @@ const Patient = ({
             )}!`}</h2>
           </div>
           <div className="mx-auto text-light">
-            {sicknessList.length === 0 && appointmentList.length === 0
+            {data.length === 0 && data.length === 0
               ? ""
               : "Take a look on your stats"}
           </div>
           <div>
-            {isDataLoading ? (
+            {/* {isLoading ? (
               <Loader />
-            ) : (
-              <div className="patient_data" style={{ width: "100%" }}>
-                {tableTogle ? (
-                  <DiagnosisTable
-                    sicknessList={sicknessList}
-                    fetchSickness={fetchSickness}
-                    setSicknessList={setSicknessList}
-                    medicinesList={medicinesList}
-                    fetchMedicines={fetchMedicines}
-                    setMedicinesList={setMedicinesList}
-                  />
-                ) : (
-                  <AppointmentTable
-                    appointmentList={appointmentList}
-                    setAppoinmentList={setAppoinmentList}
-                    showCreateAppointmentModal={showCreateAppointmentModal}
-                    setShowCreateAppointmentModal={
-                      setShowCreateAppointmentModal
-                    }
-                    doctorList={doctorList}
-                    fetchAppoinment={fetchAppoinment}
-                    hospitalList={hospitalList}
-                    medicinesList={medicinesList}
-                    fetchMedicines={fetchMedicines}
-                    setMedicinesList={setMedicinesList}
-                    fetchSickness={fetchSickness}
-                  />
-                )}
-              </div>
-            )}
+            ) : ( */}
+            <div className="patient_data" style={{ width: "100%" }}>
+              {tableToggle ? <DiagnosisTable /> : <AppointmentTable />}
+            </div>
           </div>
         </div>
       </div>

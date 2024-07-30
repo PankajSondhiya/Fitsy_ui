@@ -6,11 +6,18 @@ import { BrowserRouter } from "react-router-dom";
 
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
+import { Provider } from "react-redux";
+import { store } from "./Store/store";
+import { FirebaseProvider } from "./Firebase/firebaseConfig";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <BrowserRouter>
-    <ToastContainer position="top-right" autoClose="2000" />
-    <App />
-  </BrowserRouter>
+  <Provider store={store}>
+    <FirebaseProvider>
+      <BrowserRouter>
+        <ToastContainer position="top-right" autoClose="2000" />
+        <App />
+      </BrowserRouter>
+    </FirebaseProvider>
+  </Provider>
 );

@@ -1,86 +1,50 @@
-import { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Navbar from "../Componenets/Navbaar";
-import { useNavigate } from "react-router-dom";
-import { GetAllUsers } from "../API/admin";
-import { toast } from "react-toastify";
-import { AxiosInstance } from "../Utils/AxiosInstance";
-import DiagnosisTable from "../Componenets/PatientDiagnosisTable";
-import AppointmentTable from "../Componenets/PatientAppointmentTable";
-import UsersList from "../Componenets/UsersTable";
-import HospitalsList from "../Componenets/HospitalTable";
-import { Button, Modal } from "react-bootstrap";
-import { Search } from "react-bootstrap-icons";
-import SicknessessTable from "../Componenets/PatientDiagnosisTable";
+import Loader from "../Componenets/Loader";
+const SicknessessTable = React.lazy(() =>
+  import("../Componenets/PatientDiagnosisTable")
+);
+const AppointmentTable = React.lazy(() =>
+  import("../Componenets/PatientAppointmentTable")
+);
+const UsersList = React.lazy(() => import("../Componenets/UsersTable"));
+const HospitalsList = React.lazy(() => import("../Componenets/HospitalTable"));
 
-const Admin = ({
-  appointmentList,
-  setAppoinmentList,
-  isDataLoading,
-  setIsDataLoading,
-  fetchAppoinment,
-  fetchSickness,
-  sicknessList,
-  usersList,
-  setUsersList,
-  fetchUsers,
-  hospitalList,
-  fetchHospitals,
-  setHospitalList,
-}) => {
+const Admin = () => {
   const [activeTable, setActiveTable] = useState(1);
-  const [showHospitalModal, setShowHospitalModal] = useState(false);
-  const [isCreateHospital, setIsCreateHospital] = useState(false);
-
-  const navigate = useNavigate();
 
   const renderTable = () => {
     switch (activeTable) {
       case 1:
-        return <SicknessessTable sicknessList={sicknessList} />;
+        return (
+          <Suspense fallback={<Loader />}>
+            <SicknessessTable />
+          </Suspense>
+        );
       case 2:
         return (
-          <UsersList
-            usersList={usersList}
-            fetchUsers={fetchUsers}
-            setUsersList={setUsersList}
-          />
+          <Suspense fallback={<Loader />}>
+            <UsersList />
+          </Suspense>
         );
       case 3:
         return (
-          <AppointmentTable
-            appointmentList={appointmentList}
-            setAppoinmentList={setAppoinmentList}
-            fetchAppoinment={fetchAppoinment}
-          />
+          <Suspense fallback={<Loader />}>
+            <AppointmentTable />
+          </Suspense>
         );
+
       case 4:
         return (
-          <HospitalsList
-            setHospitalList={setHospitalList}
-            hospitalList={hospitalList}
-            fetchHospitals={fetchHospitals}
-            showHospitalModal={showHospitalModal}
-            setShowHospitalModal={setShowHospitalModal}
-            isCreateHospital={isCreateHospital}
-            setIsCreateHospital={setIsCreateHospital}
-          />
+          <Suspense fallback={<Loader />}>
+            <HospitalsList />
+          </Suspense>
         );
 
       default:
         return null;
     }
   };
-
-  useEffect(() => {
-    if (localStorage.getItem("token") === "") {
-      localStorage.clear();
-      return navigate("/");
-    }
-    fetchAppoinment();
-    fetchUsers();
-    fetchSickness();
-    fetchHospitals();
-  }, []);
 
   return (
     <>
@@ -96,25 +60,25 @@ const Admin = ({
             style={{ width: "20%", position: "sticky", top: "0px" }}
           >
             <button
-              className="btn btn-success m-2"
+              className="btn btn-success m-1"
               onClick={() => setActiveTable(1)}
             >
               Sicknesses
             </button>
             <button
-              className="btn btn-success m-2"
+              className="btn btn-success m-1"
               onClick={() => setActiveTable(2)}
             >
               Users
             </button>
             <button
-              className="btn btn-success m-2"
+              className="btn btn-success m-1"
               onClick={() => setActiveTable(3)}
             >
               Appointments
             </button>
             <button
-              className="btn btn-success m-2"
+              className="btn btn-success m-1"
               onClick={() => setActiveTable(4)}
             >
               Hospitals

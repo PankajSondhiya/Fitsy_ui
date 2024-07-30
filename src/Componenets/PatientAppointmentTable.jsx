@@ -1,107 +1,52 @@
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { FiEdit } from "react-icons/fi";
-import { DeleteAppointment, GetAppointment } from "../API/patient";
-import { toast } from "react-toastify";
-import Search from "./SearchBar";
-import { useEffect, useState } from "react";
 import { MdOutlineCreateNewFolder } from "react-icons/md";
 import CreateAppointment from "./AddAppointmentModal";
-import { AxiosInstance } from "../Utils/AxiosInstance";
 import CreateSickness from "./SicknessModal";
 import { FaSearch } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  deleteAppointment,
+  fetchAppoinmentById,
+  fetchAppointment,
+  setIsEditMode,
+  setShowAppoinmentModal,
+} from "../Slices/appointment";
+import { useEffect } from "react";
+import { setShowSicknessModal, updateSicknessInfo } from "../Slices/sickness";
 
-export const AppointmentTable = ({
-  appointmentList,
-  setAppoinmentList,
-  usersList,
-  showCreateAppointmentModal,
-  setShowCreateAppointmentModal,
-  doctorList,
-  fetchAppoinment,
-  hospitalList,
-  searchText,
-  setSearchText,
-  medicinesList,
-  fetchMedicines,
-  setMedicinesList,
-}) => {
-  const [showEditAppointmentModal, setShowEditAppointmentModal] =
-    useState(false);
-  const [editAppointmentDetail, setEditAppointmentDetail] = useState({});
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState({});
-  const [showSicknessModal, setShowSicknessModal] = useState(false);
+import TableHeader from "./TableHeader";
+import { setFilteredData } from "../Slices/users";
 
-  async function handleDelete(id) {
-    await DeleteAppointment(id);
-    const filteredData = appointmentList.filter(
-      (appoinment) => appoinment._id !== id
-    );
-    setAppoinmentList(filteredData);
-    console.log(appointmentList);
-    toast.success("appointment deleted successfully ");
-  }
-  async function handleEditAppointment(id) {
-    setShowEditAppointmentModal(true);
-    const data = await GetAppointment(id);
-    setEditAppointmentDetail(data);
-  }
-  async function getAppointmentbyId(id) {
-    const response = await AxiosInstance.get(`/fitsy/api/v1/appointment/${id}`);
-    console.log(response.data);
-    setSelectedAppointment(response.data);
-    console.log(selectedAppointment);
-  }
+export const AppointmentTable = () => {
+  const { data, isError, IsLoading } = useSelector(
+    (state) => state.appointment.appoinmentList
+  );
 
-  function handleSearch(searchText) {
-    if (searchText === "") {
-      fetchAppoinment();
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(fetchAppointment());
+  }, [dispatch]);
+  const { filteredData } = useSelector((state) => state.users);
+
+  useEffect(() => {
+    if (data) {
+      dispatch(setFilteredData(data));
     }
-    const filteredAppointment = appointmentList.filter((appointment) =>
-      appointment.disease.toLowerCase().includes(searchText.toLowerCase())
-    );
-    setAppoinmentList(filteredAppointment);
+  }, [data, dispatch]);
+
+  function handleSearch(term) {
+    if (data) {
+      const filtered = data.filter((appoinment) =>
+        appoinment?.userId?.name.toLowerCase().includes(term?.toLowerCase())
+      );
+      dispatch(setFilteredData(filtered));
+    }
   }
-
-  async function handleCreateSicknessModal(id) {
-    fetchMedicines();
-    await getAppointmentbyId(id);
-    setShowSicknessModal(true);
-  }
-
-  //   useEffect(() => {
-  //     fetchMedicines();
-  //   }, [medicinesList]);
-
   return (
     <>
       <div>
-        <div
-          className="heading_search d-flex py-5 align-items-center justify-content-between"
-          style={{
-            position: "sticky",
-            height: "50px",
-            top: "0px",
-            backgroundColor: "#1E1E1E",
-            zIndex: "1000",
-          }}
-        >
-          <h3 className="table_heading text-light">Appointments list </h3>
-          <div
-            className="search d-flex  justify-content-center align-items-center"
-            style={{ position: "relative", width: "40%" }}
-          >
-            <input
-              type="text"
-              className="form-control "
-              placeholder="enter the name"
-              onChange={(event) => handleSearch(event.target.value)}
-            />
-            <div className="search_icon " style={{ position: "absolute" }}>
-              <FaSearch />
-            </div>
-          </div>
-        </div>
+        <TableHeader title="Appoinment Table" onSearch={handleSearch} />
         <table class="table table-dark diagnosis_table">
           <thead>
             <tr>
@@ -120,15 +65,15 @@ export const AppointmentTable = ({
             </tr>
           </thead>
           <tbody>
-            {appointmentList?.map((appoinment, index) => (
+            {filteredData?.map((appoinment, index) => (
               <tr key={index}>
                 <th scope="row">{index + 1}</th>
-                <td>{appoinment.userId.name}</td>
-                <td>{appoinment.age}</td>
-                <td>{appoinment.doctor.user.name}</td>
-                <td>{appoinment.hospital.name}</td>
-                <td>{new Date(appoinment.date).toDateString()}</td>
-                <td>{appoinment.disease}</td>
+                <td>{appoinment?.userId?.name}</td>
+                <td>{appoinment?.age}</td>
+                <td>{appoinment?.doctor?.user?.name}</td>
+                <td>{appoinment?.hospital?.name}</td>
+                <td>{new Date(appoinment?.date).toDateString()}</td>
+                <td>{appoinment?.disease}</td>
                 {localStorage.getItem("userType") === "ADMIN" ? (
                   ""
                 ) : (
@@ -137,7 +82,12 @@ export const AppointmentTable = ({
                       <RiDeleteBin6Line
                         className="mx-3"
                         style={{ cursor: "pointer", color: "red" }}
-                        onClick={() => handleDelete(appoinment._id)}
+                        onClick={() => {
+                          const payload = {
+                            id: appoinment._id,
+                          };
+                          dispatch(deleteAppointment(payload));
+                        }}
                       />
                       {localStorage.getItem("userType") === "DOCTOR" ? (
                         <div>
@@ -147,9 +97,27 @@ export const AppointmentTable = ({
                               color: "green",
                               fontSize: "20px",
                             }}
-                            onClick={() =>
-                              handleCreateSicknessModal(appoinment._id)
-                            }
+                            onClick={() => {
+                              dispatch(setShowSicknessModal(true));
+                              dispatch(
+                                updateSicknessInfo({
+                                  field: "patient",
+                                  value: appoinment?.userId?._id,
+                                })
+                              );
+                              dispatch(
+                                updateSicknessInfo({
+                                  field: "doctor",
+                                  value: appoinment?.doctor?._id,
+                                })
+                              );
+                              dispatch(
+                                updateSicknessInfo({
+                                  field: "hospital",
+                                  value: appoinment.hospital._id,
+                                })
+                              );
+                            }}
                           />
                         </div>
                       ) : (
@@ -159,8 +127,13 @@ export const AppointmentTable = ({
                             color: "green",
                           }}
                           onClick={() => {
-                            setIsEditMode(true);
-                            handleEditAppointment(appoinment._id);
+                            const payload = {
+                              id: appoinment._id,
+                              dispatch: dispatch,
+                            };
+                            dispatch(setIsEditMode(true));
+                            dispatch(setShowAppoinmentModal());
+                            dispatch(fetchAppoinmentById(payload));
                           }}
                         />
                       )}
@@ -174,7 +147,9 @@ export const AppointmentTable = ({
         {localStorage.getItem("userType") === "PATIENT" ? (
           <button
             className="btn btn-success cutum_btn mb-1"
-            onClick={() => setShowCreateAppointmentModal(true)}
+            onClick={() => {
+              dispatch(setShowAppoinmentModal());
+            }}
             style={{ position: "fixed", right: "10px", bottom: "10px" }}
           >
             Book appointment
@@ -182,31 +157,9 @@ export const AppointmentTable = ({
         ) : (
           ""
         )}
-
-        <CreateAppointment
-          showCreateAppointmentModal={showCreateAppointmentModal}
-          setShowCreateAppointmentModal={setShowCreateAppointmentModal}
-          doctorList={doctorList}
-          fetchAppoinment={fetchAppoinment}
-          hospitalList={hospitalList}
-          handleEditAppointment={handleEditAppointment}
-          isEditMode={isEditMode}
-          setIsEditMode={setIsEditMode}
-          editAppointmentDetail={editAppointmentDetail}
-          setEditAppointmentDetail={setEditAppointmentDetail}
-          showEditAppointmentModal={showEditAppointmentModal}
-          setShowEditAppointmentModal={setShowEditAppointmentModal}
-        />
+        <CreateAppointment />
       </div>
-      <CreateSickness
-        medicinesList={medicinesList}
-        setMedicinesList={setMedicinesList}
-        setSelectedAppointment={setSelectedAppointment}
-        selectedAppointment={selectedAppointment}
-        showSicknessModal={showSicknessModal}
-        setShowSicknessModal={setShowSicknessModal}
-        fetchMedicines={fetchMedicines}
-      />
+      <CreateSickness />
     </>
   );
 };

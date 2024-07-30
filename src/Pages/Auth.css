@@ -1,0 +1,45 @@
+.auth-form {
+  transition: max-height 1.3s ease;
+  overflow: hidden;
+}
+.auth-form.signUp {
+  max-height: 700px;
+}
+.auth-form.Login {
+  max-height: 300px;
+}
+.forgot-password {
+  text-align: right;
+  font-size: 12px;
+  color: rgba(255, 0, 4, 0.683);
+  font-weight: 500;
+}
+.forgot-password:hover {
+  text-align: right;
+  text-decoration: underline;
+  cursor: pointer;
+  color: rgba(255, 0, 4, 0.984);
+}
+.login-text {
+  color: rgba(0, 0, 255, 0.683);
+  cursor: pointer;
+}
+.login-text:hover {
+  text-decoration: underline;
+}
+.navbar-container {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  animation: slidedown 0.8s ease-in-out;
+}
+@keyframes slidedown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}

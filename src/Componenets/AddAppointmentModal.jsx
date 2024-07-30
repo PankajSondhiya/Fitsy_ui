@@ -1,133 +1,97 @@
 import { Button, Modal } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { AxiosInstance } from "../Utils/AxiosInstance";
-import { useEffect, useState } from "react";
-
-const CreateAppointment = ({
-  showCreateAppointmentModal,
-  setShowCreateAppointmentModal,
-  doctorList,
-  fetchAppoinment,
-  handleEditAppointment,
-  isEditMode,
+import { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createAppoinment,
+  fetchAppointment,
+  setAppoinmentData,
   setIsEditMode,
-  setEditAppointmentDetail,
-  editAppointmentDetail,
-  showEditAppointmentModal,
-  setShowEditAppointmentModal,
-}) => {
-  const [appointmentData, setAppoinmentData] = useState({
-    userId: localStorage.getItem("_id"),
-    age: "",
-    doctor: doctorList ? doctorList[0]._id : "",
-    disease: "",
-    date: "",
-    hospital: doctorList ? doctorList[0].hospitals[0]._id : "",
-  });
-  const [selectedDoctorHospitalList, setSelectedDoctorHospitalList] = useState(
-    []
+  setSelectedDoctor,
+  setShowAppoinmentModal,
+  updateAppoinmentvalue,
+  updateAppointment,
+} from "../Slices/appointment";
+import { fetchDoctor } from "../Slices/doctor";
+import { fetchHositals } from "../Slices/hospital";
+import { appointment } from "../Services/appoinment";
+
+const CreateAppointment = () => {
+  const { showAppointmenModal, appoinmentData, appointmentById } = useSelector(
+    (state) => state.appointment
   );
+  const { doctorData } = useSelector((state) => state.doctor);
+  const { selectedDoctor, isEditMode } = useSelector(
+    (state) => state.appointment
+  );
+  const [userId, setUserId] = useState(localStorage.getItem("_id"));
+  // const { appointmentByIdData, isError, isLoading } = appointmentById;
+  const { doctorList, isDoctorListError, isDoctorListLoading } = doctorData;
 
+  const dispatch = useDispatch();
+
+  console.log("appoinmentData", appoinmentData);
+  const isDisabled =
+    !appoinmentData.userId ||
+    !appoinmentData.age ||
+    !appoinmentData.doctor ||
+    !appoinmentData.hospital ||
+    !appoinmentData.disease;
   useEffect(() => {
-    if (isEditMode) {
-      const selectedDoctor = doctorList.find(
-        (doctor) => doctor._id === editAppointmentDetail.doctor
-      );
-      if (selectedDoctor) {
-        setSelectedDoctorHospitalList(selectedDoctor.hospitals);
-      }
-    }
-  }, [isEditMode, doctorList, editAppointmentDetail.doctor]);
+    dispatch(fetchDoctor());
+    dispatch(fetchHositals());
+  }, []);
 
-  useEffect(() => {
-    if (localStorage.getItem("userType" === "PATIENT")) {
-      const initialDoctor = doctorList.find(
-        (doctor) => doctor._id === appointmentData.doctor
-      );
-      if (initialDoctor) {
-        setSelectedDoctorHospitalList(initialDoctor.hospitals);
-      }
-    }
-  }, [appointmentData.doctor, doctorList]);
-
-  async function handleCreateAppoinment(event) {
-    if (
-      appointmentData.age === "" ||
-      appointmentData.doctor === "" ||
-      appointmentData.date === "" ||
-      appointmentData.disease === "" ||
-      appointmentData.hospital === ""
-    ) {
-      toast.error("All fields are required");
-      return;
-    }
-    try {
-      const { data } = await AxiosInstance.post(
-        "fitsy/api/v1/appointment",
-        appointmentData
-      );
-      setAppoinmentData(data);
-      toast.success("Appointment booked");
-      fetchAppoinment();
-      setShowCreateAppointmentModal(false);
-    } catch (ex) {
-      toast.error(ex.response.data.message);
-    }
-  }
-
-  const handleAppoinmentCreateFormChnage = (event) => {
-    setAppoinmentData({
-      ...appointmentData,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  async function updateAppointment(id) {
-    await AxiosInstance.put(
-      `fitsy/api/v1/appointment/${id}`,
-      editAppointmentDetail
+  const selectedHospitalList = () => {
+    const selectedDoctorHospitals = doctorList.find(
+      (doctor) => doctor._id === selectedDoctor
     );
-    setShowEditAppointmentModal(false);
-    fetchAppoinment();
-    setEditAppointmentDetail({});
-  }
-
-  const handleEditAppointmentChange = (event) => {
-    setEditAppointmentDetail({
-      ...editAppointmentDetail,
-      [event.target.name]: event.target.value,
-    });
+    const selectedHospitals = selectedDoctorHospitals?.hospitals;
+    return selectedHospitals || [];
   };
 
-  function handleDoctorChange(event) {
-    const selecteDoctorId = event.target.value;
-    setAppoinmentData({
-      ...appointmentData,
-      doctor: selecteDoctorId,
-    });
-
-    const doctor = doctorList.find((doctor) => doctor._id === selecteDoctorId);
-    setSelectedDoctorHospitalList(doctor.hospitals);
-  }
+  useEffect(() => {
+    const hospital = selectedHospitalList();
+    if (hospital.length === 1) {
+      dispatch(
+        updateAppoinmentvalue({
+          field: "hospital",
+          value: hospital[0]._id,
+        })
+      );
+    }
+  }, [selectedHospitalList, dispatch]);
+  useEffect(() => {
+    setUserId(localStorage.getItem("_id"));
+  }, []);
 
   return (
     <>
       <Modal
-        show={
-          isEditMode ? showEditAppointmentModal : showCreateAppointmentModal
-        }
-        onHide={
-          isEditMode
-            ? () => setShowEditAppointmentModal(false)
-            : () => setShowCreateAppointmentModal(false)
-        }
+        show={showAppointmenModal}
+        onHide={() => {
+          dispatch(setShowAppoinmentModal());
+          dispatch(setIsEditMode(false));
+          dispatch(
+            setAppoinmentData({
+              userId: localStorage.getItem("_id"),
+              age: "",
+              doctor: "",
+              date: "",
+              hospital: "",
+              disease: "",
+            })
+          );
+        }}
         centered
         backdrop="static"
         variant="dark"
       >
         <Modal.Header closeButton>
           <Modal.Title>
-            {isEditMode ? "Edit appointmentDetail" : "Appointment details"}
+            {" "}
+            {isEditMode ? "Edit Appointment" : "create appointment"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -136,7 +100,7 @@ const CreateAppointment = ({
             <input
               type="text"
               name="userId"
-              value={localStorage.getItem("_id")}
+              value={userId}
               className="form-control"
               readOnly
               required
@@ -147,13 +111,14 @@ const CreateAppointment = ({
             <input
               type="number"
               name="age"
-              value={
-                isEditMode ? editAppointmentDetail.age : appointmentData.age
-              }
-              onChange={
-                isEditMode
-                  ? handleEditAppointmentChange
-                  : handleAppoinmentCreateFormChnage
+              value={appoinmentData.age}
+              onChange={(event) =>
+                dispatch(
+                  updateAppoinmentvalue({
+                    field: "age",
+                    value: event.target.value,
+                  })
+                )
               }
               className="form-control"
               placeholder="enter your age"
@@ -161,26 +126,29 @@ const CreateAppointment = ({
             />
           </div>
           <div className="inputgroup mb-1">
-            <div>Select Doctor </div>
+            <div>Select Doctor</div>
             <select
               className="form-select"
               required
               name="doctor"
               placeholder="select the doctor"
-              value={
-                isEditMode
-                  ? editAppointmentDetail.doctor
-                  : appointmentData.doctor
-              }
-              onChange={
-                isEditMode
-                  ? handleEditAppointmentChange
-                  : (event) => handleDoctorChange(event)
-              }
+              value={appoinmentData.doctor}
+              onChange={(event) => {
+                dispatch(
+                  updateAppoinmentvalue({
+                    field: "doctor",
+                    value: event.target.value,
+                  })
+                );
+                dispatch(setSelectedDoctor(event.target.value));
+              }}
             >
+              <option value="" disabled>
+                Select a doctor
+              </option>
               {doctorList?.map((doctor) => (
-                <option key={doctor._id} value={`${doctor._id}`}>
-                  {doctor.user.name}
+                <option key={doctor._id} value={doctor._id}>
+                  {doctor?.user?.name}
                 </option>
               ))}
             </select>
@@ -189,20 +157,22 @@ const CreateAppointment = ({
             <div>Hospital</div>
             <select
               name="hospital"
-              value={
-                isEditMode
-                  ? editAppointmentDetail.hospital
-                  : appointmentData.hospital
-              }
-              onChange={
-                isEditMode
-                  ? handleEditAppointmentChange
-                  : handleAppoinmentCreateFormChnage
+              value={appoinmentData.hospital}
+              onChange={(event) =>
+                dispatch(
+                  updateAppoinmentvalue({
+                    field: "hospital",
+                    value: event.target.value,
+                  })
+                )
               }
               className="form-select"
               required
             >
-              {selectedDoctorHospitalList.map((hospital) => (
+              <option value="" disabled>
+                Select a hospital
+              </option>
+              {selectedHospitalList()?.map((hospital) => (
                 <option key={hospital._id} value={hospital._id}>
                   {hospital.name}
                 </option>
@@ -215,17 +185,18 @@ const CreateAppointment = ({
             <input
               type="date"
               name="date"
-              value={
-                isEditMode ? editAppointmentDetail.date : appointmentData.date
-              }
-              onChange={
-                isEditMode
-                  ? handleEditAppointmentChange
-                  : handleAppoinmentCreateFormChnage
+              value={appoinmentData.date}
+              onChange={(event) =>
+                dispatch(
+                  updateAppoinmentvalue({
+                    field: "date",
+                    value: event.target.value,
+                  })
+                )
               }
               className="form-control"
               placeholder="select date"
-              require
+              required
             />
           </div>
           <div className="inputgroup mb-1">
@@ -233,16 +204,15 @@ const CreateAppointment = ({
             <textarea
               type="text"
               name="disease"
-              value={
-                isEditMode
-                  ? editAppointmentDetail.disease
-                  : appointmentData.disease
-              }
+              value={appoinmentData.disease}
               className="form-control"
-              onChange={
-                isEditMode
-                  ? handleEditAppointmentChange
-                  : handleAppoinmentCreateFormChnage
+              onChange={(event) =>
+                dispatch(
+                  updateAppoinmentvalue({
+                    field: "disease",
+                    value: event.target.value,
+                  })
+                )
               }
               placeholder="enter your disease and symptoms"
               required
@@ -252,26 +222,51 @@ const CreateAppointment = ({
         <Modal.Footer>
           <Button
             variant="secondary"
-            onClick={
-              isEditMode
-                ? () => {
-                    setShowEditAppointmentModal(false);
-                    setIsEditMode(false);
-                  }
-                : () => setShowCreateAppointmentModal(false)
-            }
+            onClick={() => {
+              dispatch(setShowAppoinmentModal());
+              dispatch(setIsEditMode(false));
+              dispatch(
+                setAppoinmentData({
+                  userId: localStorage.getItem("_id"),
+                  age: "",
+                  doctor: "",
+                  date: "",
+                  hospital: "",
+                  disease: "",
+                })
+              );
+            }}
           >
             Cancel
           </Button>
           <Button
             variant="primary"
+            disabled={isDisabled}
             onClick={
               isEditMode
-                ? () => updateAppointment(editAppointmentDetail._id)
-                : () => handleCreateAppoinment()
+                ? () => {
+                    const payload = {
+                      id: appoinmentData._id,
+                      data: appoinmentData,
+                    };
+                    console.log("Dispatching payload:", payload);
+                    dispatch(updateAppointment(payload));
+                    dispatch(setShowAppoinmentModal());
+                    dispatch(fetchAppointment());
+                    dispatch(setIsEditMode(false));
+                  }
+                : () => {
+                    const payload = {
+                      Data: appoinmentData,
+                      dispatch: dispatch,
+                    };
+                    console.log("dispatching the payload", payload);
+                    dispatch(createAppoinment(payload));
+                    dispatch(setShowAppoinmentModal());
+                  }
             }
           >
-            {isEditMode ? "Edit appointment" : "Book appointment"}
+            {isEditMode ? "Edit Appointment" : "Book appointment "}
           </Button>
         </Modal.Footer>
       </Modal>

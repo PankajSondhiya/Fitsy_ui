@@ -1,82 +1,63 @@
 import { RiDeleteBin6Line } from "react-icons/ri";
 import { FiEdit } from "react-icons/fi";
 import { Button, Modal } from "react-bootstrap";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AxiosInstance } from "../Utils/AxiosInstance";
 import { toast } from "react-toastify";
 import Search from "./SearchBar";
-
-const HospitalsList = ({
-  hospitalList,
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createNewHospital,
+  deleteHospital,
+  editHospital,
+  fetchHositals,
   fetchHospitals,
-  showHospitalModal,
-  setShowHospitalModal,
-  isCreateHospital,
-  setIsCreateHospital,
-  setHospitalList,
-}) => {
-  const [hospitalDetail, setHospitalDetail] = useState({});
+  hospitalById,
+  setHospitalValue,
+  setIsHospitalEdit,
+  setShowCreateHospitalModal,
+  updateHospitalValue,
+} from "../Slices/hospital";
+import { editHospitalById } from "../Services/hospital";
+import TableHeader from "./TableHeader";
+import { setFilteredData } from "../Slices/users";
 
-  const hospitalDetailFormChange = (event) => {
-    setHospitalDetail({
-      ...hospitalDetail,
-      [event.target.name]: event.target.value,
-    });
-  };
+const HospitalsList = () => {
+  const dispatch = useDispatch();
+  const {
+    hospitalData,
+    showCreateHospitalModal,
+    hospitalValue,
+    isHospitalEdit,
+  } = useSelector((state) => state.hospital);
+  const { hospitalList, isHospitalError, isHospitalLoading } = hospitalData;
+  const { filteredData } = useSelector((state) => state.users);
 
-  const hospitalCreateFormChange = (event) => {
-    setHospitalDetail({
-      ...hospitalDetail,
-      [event.target.name]: event.target.value,
-    });
-  };
-  async function createHospital() {
-    const { data } = await AxiosInstance.post(
-      "/fitsy/api/v1/hospitals",
-      hospitalDetail
-    );
-    setIsCreateHospital(false);
-    setHospitalDetail({});
-    fetchHospitals();
-    setShowHospitalModal(false);
-  }
+  useEffect(() => {
+    dispatch(fetchHositals());
+  }, [dispatch]);
 
-  async function handleShowHospitalModal(id) {
-    const { data } = await AxiosInstance.get(`/fitsy/api/v1/hospitals/${id}`);
-    setHospitalDetail(data);
-    setShowHospitalModal(true);
-  }
+  useEffect(() => {
+    if (hospitalList) {
+      dispatch(setFilteredData(hospitalList));
+    }
+  }, [hospitalList]);
 
-  async function handleEditHospitalDetail(id) {
-    await AxiosInstance.put(`/fitsy/api/v1/hospitals/${id}`, hospitalDetail);
-    toast.success("Updated successfully");
-    setShowHospitalModal(false);
-    setHospitalDetail({});
-    fetchHospitals();
-  }
-
-  async function deleteHospital(id) {
-    await AxiosInstance.delete(`/fitsy/api/v1/hospitals/${id}`);
-    const filteredData = hospitalList.filter((hospital) => hospital._id !== id);
-    setHospitalList(filteredData);
+  function handleSearch(term) {
+    if (hospitalList) {
+      const filtered = hospitalList?.filter(
+        (hospital) =>
+          hospital?.name &&
+          hospital.name.toLowerCase().includes(term?.toLowerCase())
+      );
+      dispatch(setFilteredData(filtered));
+    }
   }
 
   return (
     <>
       <div>
-        <div
-          className="heading_search d-flex py-5 align-items-center justify-content-between "
-          style={{
-            position: "sticky",
-            height: "50px",
-            top: "0px",
-            // zIndex: "400",
-            marginBottom: "4px",
-          }}
-        >
-          <h3 className="table_heading text-light">Hospital list </h3>
-          <Search />
-        </div>
+        <TableHeader title="Hospital Table" onSearch={handleSearch} />
         <table class="table table-dark diagnosis_table">
           <thead>
             <tr>
@@ -91,22 +72,23 @@ const HospitalsList = ({
             </tr>
           </thead>
           <tbody>
-            {hospitalList?.map((hospital, index) => (
+            {filteredData?.map((hospital, index) => (
               <tr key={index}>
                 <th scope="row">{index + 1}</th>
-                <td>{hospital.name}</td>
-                <td>{hospital.email}</td>
-                <td>{hospital.description}</td>
-                <td>{hospital.noOfBeds}</td>
-                <td>{hospital.address}</td>
-                <td>{hospital.contactNo}</td>
-
+                <td>{hospital?.name}</td>
+                <td>{hospital?.email}</td>
+                <td>{hospital?.description}</td>
+                <td>{hospital?.noOfBeds}</td>
+                <td>{hospital?.address}</td>
+                <td>{hospital?.contactNo}</td>
                 <td>
                   <div className="d-flex ">
                     <RiDeleteBin6Line
                       className="mx-3"
                       style={{ cursor: "pointer", color: "red" }}
-                      onClick={() => deleteHospital(hospital._id)}
+                      onClick={() =>
+                        dispatch(deleteHospital({ id: hospital._id }))
+                      }
                     />
                     <FiEdit
                       style={{
@@ -114,8 +96,9 @@ const HospitalsList = ({
                         color: "green",
                       }}
                       onClick={() => {
-                        handleShowHospitalModal(hospital._id);
-                        setIsCreateHospital(false);
+                        dispatch(setIsHospitalEdit(true));
+                        dispatch(setShowCreateHospitalModal(true));
+                        dispatch(hospitalById({ id: hospital._id }));
                       }}
                     />
                   </div>
@@ -128,24 +111,34 @@ const HospitalsList = ({
           className="btn btn-success m-2"
           style={{ position: "fixed", bottom: "5px", right: "5px" }}
           onClick={() => {
-            setShowHospitalModal(true);
-            setIsCreateHospital(true);
+            dispatch(setShowCreateHospitalModal(true));
           }}
         >
-          Create hospital
+          create hospital
         </button>
 
         <Modal
-          show={showHospitalModal}
-          onHide={() => setShowHospitalModal(false)}
+          show={showCreateHospitalModal}
+          onHide={() => {
+            dispatch(setShowCreateHospitalModal(false));
+            dispatch(setIsHospitalEdit(false));
+            dispatch(
+              setHospitalValue({
+                name: "",
+                email: "",
+                noOfBeds: 0,
+                address: "",
+                contactNo: 0,
+                description: "",
+              })
+            );
+          }}
           centered
           backdrop="static"
           variant="dark"
         >
           <Modal.Header closeButton>
-            <Modal.Title>
-              {isCreateHospital ? "Create hospital" : "Edit hospital"}
-            </Modal.Title>
+            <Modal.Title>{isHospitalEdit ? "Edit " : "Create"}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <div className="inputgroup mb-1">
@@ -153,11 +146,14 @@ const HospitalsList = ({
               <input
                 type="text"
                 name="name"
-                value={hospitalDetail.name}
-                onChange={
-                  isCreateHospital
-                    ? hospitalCreateFormChange
-                    : hospitalDetailFormChange
+                value={hospitalValue.name}
+                onChange={(event) =>
+                  dispatch(
+                    updateHospitalValue({
+                      field: "name",
+                      value: event.target.value,
+                    })
+                  )
                 }
                 className="form-control"
                 required
@@ -168,11 +164,14 @@ const HospitalsList = ({
               <input
                 type="text"
                 name="email"
-                value={hospitalDetail.email}
-                onChange={
-                  isCreateHospital
-                    ? hospitalCreateFormChange
-                    : hospitalDetailFormChange
+                value={hospitalValue.email}
+                onChange={(event) =>
+                  dispatch(
+                    updateHospitalValue({
+                      field: "email",
+                      value: event.target.value,
+                    })
+                  )
                 }
                 className="form-control"
                 required
@@ -182,15 +181,18 @@ const HospitalsList = ({
             <div className="inputgroup mb-1">
               <div>Beds No</div>
               <input
-                type="number"
+                type="text"
                 className="form-control"
                 required
                 name="noOfBeds"
-                value={hospitalDetail.noOfBeds}
-                onChange={
-                  isCreateHospital
-                    ? hospitalCreateFormChange
-                    : hospitalDetailFormChange
+                value={hospitalValue.noOfBeds}
+                onChange={(event) =>
+                  dispatch(
+                    updateHospitalValue({
+                      field: "noOfBeds",
+                      value: event.target.value,
+                    })
+                  )
                 }
               />
             </div>
@@ -200,26 +202,32 @@ const HospitalsList = ({
                 className="form-control"
                 required
                 name="address"
-                value={hospitalDetail.address}
-                onChange={
-                  isCreateHospital
-                    ? hospitalCreateFormChange
-                    : hospitalDetailFormChange
+                value={hospitalValue.address}
+                onChange={(event) =>
+                  dispatch(
+                    updateHospitalValue({
+                      field: "address",
+                      value: event.target.value,
+                    })
+                  )
                 }
               />
             </div>
             <div className="inputgroup mb-1">
               <div>Contact no</div>
               <input
-                type="number"
+                type="text"
                 className="form-control"
                 required
                 name="contactNo"
-                value={hospitalDetail.contactNo}
-                onChange={
-                  isCreateHospital
-                    ? hospitalCreateFormChange
-                    : hospitalDetailFormChange
+                value={hospitalValue.contactNo}
+                onChange={(event) =>
+                  dispatch(
+                    updateHospitalValue({
+                      field: "contactNo",
+                      value: event.target.value,
+                    })
+                  )
                 }
               />
             </div>
@@ -229,11 +237,14 @@ const HospitalsList = ({
                 className="form-control"
                 required
                 name="description"
-                value={hospitalDetail.description}
-                onChange={
-                  isCreateHospital
-                    ? hospitalCreateFormChange
-                    : hospitalDetailFormChange
+                value={hospitalValue.description}
+                onChange={(event) =>
+                  dispatch(
+                    updateHospitalValue({
+                      field: "description",
+                      value: event.target.value,
+                    })
+                  )
                 }
               />
             </div>
@@ -241,19 +252,49 @@ const HospitalsList = ({
           <Modal.Footer>
             <Button
               variant="secondary"
-              onClick={() => setShowHospitalModal(false)}
+              onClick={() => {
+                dispatch(setShowCreateHospitalModal(false));
+                dispatch(setIsHospitalEdit(false));
+                dispatch(
+                  setHospitalValue({
+                    name: "",
+                    email: "",
+                    noOfBeds: 0,
+                    address: "",
+                    contactNo: 0,
+                    description: "",
+                  })
+                );
+              }}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={
-                isCreateHospital
-                  ? () => createHospital()
-                  : () => handleEditHospitalDetail(hospitalDetail._id)
+                isHospitalEdit
+                  ? () => {
+                      dispatch(
+                        editHospital({
+                          id: hospitalValue._id,
+                          Data: hospitalValue,
+                          dispatch: dispatch,
+                        })
+                      );
+                      dispatch(setShowCreateHospitalModal(false));
+                    }
+                  : () => {
+                      dispatch(
+                        createNewHospital({
+                          Data: hospitalValue,
+                          dispatch: dispatch,
+                        })
+                      );
+                      dispatch(setShowCreateHospitalModal(false));
+                    }
               }
             >
-              {isCreateHospital ? "create" : "edit"}
+              {isHospitalEdit ? "edit hospital" : "create hospital"}
             </Button>
           </Modal.Footer>
         </Modal>
