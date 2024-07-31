@@ -29,7 +29,7 @@ const sicknessSlice = createSlice({
       prescription: "",
       hospital: "",
     },
-    tableToggle: false,
+    tableToggle: true,
     showSicknessModal: false,
     isSicknessEdit: false,
     sicknessList: {

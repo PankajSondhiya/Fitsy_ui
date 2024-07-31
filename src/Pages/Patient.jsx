@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { AxiosInstance } from "../Utils/AxiosInstance";
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -7,13 +7,16 @@ import "react-toastify/dist/ReactToastify.css";
 import "../Pages/homePage.css";
 import Navbar from "../Componenets/Navbaar";
 
-import AppointmentTable from "../Componenets/PatientAppointmentTable";
-import DiagnosisTable from "../Componenets/PatientDiagnosisTable";
-import { Window } from "react-bootstrap-icons";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSickness, setTableToggle } from "../Slices/sickness";
 import { fetchAppointment } from "../Slices/appointment";
-
+import Loader from "../Componenets/Loader";
+const DiagnosisTable = React.lazy(() =>
+  import("../Componenets/PatientDiagnosisTable")
+);
+const AppointmentTable = React.lazy(() =>
+  import("../Componenets/PatientAppointmentTable")
+);
 const Patient = () => {
   const { tableToggle } = useSelector((store) => store.sickness);
   const { data, isError, isLoading } = useSelector(
@@ -24,8 +27,8 @@ const Patient = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // dispatch(fetchSickness());
     dispatch(fetchAppointment());
+    dispatch(fetchSickness());
   }, [dispatch]);
 
   return (
@@ -72,7 +75,15 @@ const Patient = () => {
               <Loader />
             ) : ( */}
             <div className="patient_data" style={{ width: "100%" }}>
-              {tableToggle ? <DiagnosisTable /> : <AppointmentTable />}
+              {tableToggle ? (
+                <Suspense fallback={<Loader />}>
+                  <DiagnosisTable />
+                </Suspense>
+              ) : (
+                <Suspense fallback={<Loader />}>
+                  <AppointmentTable />
+                </Suspense>
+              )}
             </div>
           </div>
         </div>
