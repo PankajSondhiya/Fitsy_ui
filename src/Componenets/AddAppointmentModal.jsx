@@ -33,7 +33,6 @@ const CreateAppointment = () => {
 
   console.log("appoinmentData", appoinmentData);
   const isDisabled =
-    !appoinmentData.userId ||
     !appoinmentData.age ||
     !appoinmentData.doctor ||
     !appoinmentData.hospital ||
@@ -63,8 +62,15 @@ const CreateAppointment = () => {
     }
   }, [selectedHospitalList, dispatch]);
   useEffect(() => {
-    setUserId(localStorage.getItem("_id"));
-  }, []);
+    if (showAppointmenModal) {
+      dispatch(
+        updateAppoinmentvalue({
+          field: "userId",
+          value: localStorage.getItem("_id"),
+        })
+      );
+    }
+  }, [showAppointmenModal, dispatch]);
 
   return (
     <>
@@ -100,9 +106,10 @@ const CreateAppointment = () => {
             <input
               type="text"
               name="userId"
-              value={userId}
+              value={appoinmentData.userId}
               className="form-control"
               readOnly
+              disabled
               required
             />
           </div>
