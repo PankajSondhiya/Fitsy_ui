@@ -54,6 +54,14 @@ const HospitalsList = () => {
     }
   }
 
+  const isDisabled =
+    !hospitalValue.name ||
+    !hospitalValue.email ||
+    !hospitalValue.noOfBeds ||
+    !hospitalValue.address ||
+    !hospitalValue.contactNo ||
+    !hospitalValue.description;
+
   return (
     <>
       <div>
@@ -140,6 +148,7 @@ const HospitalsList = () => {
           <Modal.Header closeButton>
             <Modal.Title>{isHospitalEdit ? "Edit " : "Create"}</Modal.Title>
           </Modal.Header>
+
           <Modal.Body>
             <div className="inputgroup mb-1">
               <div>Name</div>
@@ -270,6 +279,7 @@ const HospitalsList = () => {
               Cancel
             </Button>
             <Button
+              disabled={isDisabled}
               variant="primary"
               onClick={
                 isHospitalEdit
